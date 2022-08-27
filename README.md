@@ -7,11 +7,15 @@ A simple CLI tool for interacting with MQTT, pub, sub, clear, backup, restore.
 ```
 npm install mqtt_tool
 ```
+or globally by adding the `-g` flag (and possibly `sudo`)
+
 
 ## Usage
 
+If the tool is globally installed, then you can run `mqtt_tool` directly and from anywhere in your file-tree. Otherwise you need to use `npx` locally:
+
 ```sh
-> node index.js --help
+> npx mqtt_tool --help
 connected to mqtt broker
 index.js <command>
 
@@ -31,6 +35,7 @@ Options:
 ```
 
 Set your ENV variable `MQTT_URL` to the url of your mqtt broker. The default is `mqtts://localhost`. When using SSL, i.e., `mqtts://`, you need to have certificates in a sub-folder called `certs/`.
+
 
 ### Generating local dev certificates
 

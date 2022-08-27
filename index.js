@@ -37,12 +37,17 @@ const setTerminalTitle = (title) => {
 
 setTerminalTitle('mqtt_tool');
 
-const mqttClient = mqtt.connect(MQTT_URL, {
-  key: fs.readFileSync('certs/client.key'),
-  cert: fs.readFileSync('certs/client.crt'),
+const options = {
   rejectUnauthorized: false,
   protocolVersion: 5 // needed for the `rap` option, i.e., to get retain flags
-});
+};
+
+if (MQTT_URL.startsWith('mqtts')) {
+  options.key = fs.readFileSync('certs/client.key');
+  options.cert = fs.readFileSync('certs/client.crt');
+}
+
+const mqttClient = mqtt.connect(MQTT_URL, options);
 
 mqttClient.on('error', console.log);
 mqttClient.on('disconnect', console.log);
