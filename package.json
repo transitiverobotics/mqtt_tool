@@ -1,6 +1,6 @@
 {
   "name": "mqtt_tool",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A simple CLI tool for interacting with MQTT, pub, sub, clear, backup, restore.",
   "main": "index.js",
   "bin": {
@@ -9,7 +9,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["mqtt", "cli"],
+  "keywords": [
+    "mqtt",
+    "cli"
+  ],
   "author": "Christian Fritz",
   "license": "Apache-2.0",
   "dependencies": {
