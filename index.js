@@ -72,8 +72,9 @@ mqttClient.on('connect', () => {
           //     JSON.stringify(JSON.parse(payload.toString()), true, 2)
           //   : ''}`);
           console.log(topic,
-            argv.verbose ?
-            (payload.length > 0 ? JSON.parse(payload.toString()) : null)
+            argv.verbose ? ( payload.length > 0 ?
+              JSON.stringify(JSON.parse(payload.toString()), true, 2)
+              : null )
             : '',
             argv.verbose ? packet.retain : ''
           );
