@@ -173,8 +173,8 @@ mqttClient.on('connect', () => {
 
 
     .middleware([argv => {
-      if (argv.batch) {
-        setTimeout(() => exit(), 100);
+      if ('batch' in argv) {
+        setTimeout(() => exit(), argv.batch || 100);
       }
     }])
     .demandCommand(1, 'Please specify a command.')
@@ -185,8 +185,8 @@ mqttClient.on('connect', () => {
     })
     .option('batch', {
       alias: 'b',
-      type: 'boolean',
-      description: 'Stop after a short period. Useful for batching.'
+      type: 'number',
+      description: 'Stop after a short period (in ms). Useful for batching.'
     }).argv;
 
 });
