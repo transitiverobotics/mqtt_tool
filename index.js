@@ -108,11 +108,22 @@ mqttClient.on('connect', () => {
             describe: 'a filename listing topics to clear, one per line'
           })
       }, (argv) => {
-        const topics = fs.readFileSync(argv.file, {encoding: 'utf8'}).split('\n');
-        topics.forEach(topic => {
+        // const topics = fs.readFileSync(argv.file, {encoding: 'utf8'}).split('\n');
+        // topics.forEach(topic => {
+        //   mqttClient.publish(topic, null, {retain: true});
+        //   argv.verbose && console.log('cleared', topic);
+        // });
+        const input = argv.file.length > 0 ?
+          fs.createReadStream(argv.file, {encoding: 'utf8'}) :
+          process.stdin;
+        const rl = readline.createInterface({input});
+
+        rl.on('line', (topic) => {
           mqttClient.publish(topic, null, {retain: true});
           argv.verbose && console.log('cleared', topic);
         });
+        rl.on('close', () => process.exit(0));
+
       })
 
     .command('pub topic message', 'publish message on topic',
