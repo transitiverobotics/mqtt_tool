@@ -101,25 +101,20 @@ mqttClient.on('connect', () => {
         mqttClient.subscribe(argv.topic, argv.verbose && console.log);
       })
 
-    .command('purge file', 'clear topics listed in file without subscribing',
+    .command('purge [file]', 'clear topics listed in file without subscribing',
       (yargs) => {
         return yargs
           .positional('file', {
-            describe: 'a filename listing topics to clear, one per line'
+            describe: 'a filename listing topics to clear, one per line',
           })
       }, (argv) => {
-        // const topics = fs.readFileSync(argv.file, {encoding: 'utf8'}).split('\n');
-        // topics.forEach(topic => {
-        //   mqttClient.publish(topic, null, {retain: true});
-        //   argv.verbose && console.log('cleared', topic);
-        // });
-        const input = argv.file.length > 0 ?
+        const input = argv.file?.length > 0 ?
           fs.createReadStream(argv.file, {encoding: 'utf8'}) :
           process.stdin;
         const rl = readline.createInterface({input});
 
         rl.on('line', (topic) => {
-          mqttClient.publish(topic, null, {retain: true});
+          mqttClient.publish(topic.trim(), null, {retain: true});
           argv.verbose && console.log('cleared', topic);
         });
         rl.on('close', () => process.exit(0));
