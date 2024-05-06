@@ -192,6 +192,27 @@ mqttClient.on('connect', () => {
         rl.on('close', () => process.exit(0));
       })
 
+    .command('stress [rate]',
+      'Stress the broker with rate publications per second (please use responsibly)',
+      (yargs) => yargs.positional('rate', {
+        describe: 'number of publications per second',
+        default: '100'
+      }),
+      (argv) => {
+        setTerminalTitle(`mqtt_tool stress`);
+
+        const topic = `/stress/${process.pid}`;
+
+        mqttClient.on('message', () => {
+          argv.verbose && process.stdout.write('.');
+        });
+        mqttClient.subscribe(topic, {rap: true}, argv.verbose && console.log);
+
+        const rate = Number(argv.rate);
+        setInterval(() => {
+            mqttClient.publish(topic, String(Date.now()), {retain: false});
+          }, 1000/rate);
+      })
 
     .middleware([argv => {
       if ('batch' in argv) {
