@@ -13,6 +13,8 @@ let exit = () => {
   process.exit();
 }
 
+const decodeJWT = (jwt) => JSON.parse(atob(jwt.split('.')[1]));
+
 MQTT_URL = process.env.MQTT_URL || 'mqtts://localhost';
 
 /** set the title of the terminal we are running in */
@@ -45,6 +47,13 @@ const options = {
 if (MQTT_URL.startsWith('mqtts')) {
   options.key = fs.readFileSync('certs/client.key');
   options.cert = fs.readFileSync('certs/client.crt');
+}
+
+if (process.env.JWT) {
+  const payload = decodeJWT(process.env.JWT);
+  const id = payload.id;
+  options.username = JSON.stringify({id, payload});
+  options.password = process.env.JWT;
 }
 
 const mqttClient = mqtt.connect(MQTT_URL, options);
