@@ -37,6 +37,16 @@ const setTerminalTitle = (title) => {
   })
 };
 
+const prettyPayload = (string) => {
+  try {
+    const json = JSON.parse(string);
+    return JSON.stringify(json, true, 2)
+  } catch (e) {
+    return string;
+  }
+};
+
+
 setTerminalTitle('mqtt_tool');
 
 const options = {
@@ -81,10 +91,7 @@ mqttClient.on('connect', () => {
           //     JSON.stringify(JSON.parse(payload.toString()), true, 2)
           //   : ''}`);
           console.log(topic,
-            argv.verbose ? ( payload.length > 0 ?
-              JSON.stringify(JSON.parse(payload.toString()), true, 2)
-              : null )
-            : '',
+            argv.verbose ? prettyPayload(payload.toString()) : '',
             argv.verbose ? packet.retain : ''
           );
         });
