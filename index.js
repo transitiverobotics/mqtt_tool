@@ -9,13 +9,15 @@ const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 const readline = require('node:readline');
 
+const DIR = process.cwd();
+
 let exit = () => {
   process.exit();
 }
 
 const decodeJWT = (jwt) => JSON.parse(atob(jwt.split('.')[1]));
 
-MQTT_URL = process.env.MQTT_URL || 'mqtts://localhost';
+let MQTT_URL = process.env.MQTT_URL || 'mqtts://localhost';
 
 /** set the title of the terminal we are running in */
 const setTerminalTitle = (title) => {
@@ -55,8 +57,12 @@ const options = {
 };
 
 if (MQTT_URL.startsWith('mqtts')) {
-  options.key = fs.readFileSync('certs/client.key');
-  options.cert = fs.readFileSync('certs/client.crt');
+  try {
+    options.key = fs.readFileSync('certs/client.key');
+    options.cert = fs.readFileSync('certs/client.crt');
+  } catch (e) {
+    console.log('No certificates found, trying other methods');
+  }
 }
 
 if (process.env.JWT) {
@@ -64,6 +70,30 @@ if (process.env.JWT) {
   const id = payload.id;
   options.username = JSON.stringify({id, payload});
   options.password = process.env.JWT;
+}
+
+if (!process.env.MQTT_URL && !options.key && !options.username) {
+  /* Neither certificates, nor a JWT was provided, try "capability mode". In
+  this mode we try to connect to the local mqtt broker run by the robot-agent. For
+  that we look for a Transitive capability in the local folder and try to
+  authenticate as that. */
+  const package = require(`${DIR}/package.json`);
+  if (!package) {
+    console.error('No authentication method found');
+    process.exit(1);
+  }
+  MQTT_URL = 'mqtt://localhost';
+  const versionLengthByLevel = { major: 1, minor: 2, patch: 3 };
+  const versionLength = versionLengthByLevel[package.config?.versionNamespace || 'patch'];
+  const versionNS = package.version.split('.').slice(0, versionLength).join('.');
+
+  options.clientId = `${package.name}/${versionNS}`;
+  options.password =
+    fs.readFileSync(`${process.env.HOME}/.transitive/packages/${package.name}/password`, 'utf8');
+  options.username = JSON.stringify({version: package.version});
+  // the Aedes mqtt broker run by the robot-agent doesn't use version 5:
+  delete options.protocolVersion;
+  console.log('Trying to connect to local capability');
 }
 
 const mqttClient = mqtt.connect(MQTT_URL, options);
