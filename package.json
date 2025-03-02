@@ -1,6 +1,6 @@
 {
   "name": "mqtt_tool",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "description": "A simple CLI tool for interacting with MQTT, pub, sub, clear, backup, restore.",
   "main": "index.js",
   "bin": {
