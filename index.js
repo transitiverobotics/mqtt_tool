@@ -117,11 +117,12 @@ mqttClient.on('connect', () => {
         if (argv.verbose) console.info(`subscribing to: ${argv.topic}`)
 
         mqttClient.on('message', (topic, payload, packet) => {
-          // console.log(`${topic}${argv.verbose ? ' ' +
-          //     JSON.stringify(JSON.parse(payload.toString()), true, 2)
-          //   : ''}`);
           console.log(topic,
-            argv.verbose ? prettyPayload(payload.toString()) : '',
+            argv.verbose ? ( payload.length > 0 ?
+              //JSON.stringify(JSON.parse(payload.toString()), true, 2)
+              JSON.stringify(JSON.parse(payload.toString()))
+              : null )
+            : '',
             argv.verbose ? packet.retain : ''
           );
         });
