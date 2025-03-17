@@ -15,6 +15,9 @@ let exit = () => {
   process.exit();
 }
 
+/** Wait for delay ms, for use in async functions. */
+const wait = (delay) => new Promise((resolve) => { setTimeout(resolve, delay); });
+
 const decodeJWT = (jwt) => JSON.parse(atob(jwt.split('.')[1]));
 
 let MQTT_URL = process.env.MQTT_URL || 'mqtts://localhost';
@@ -160,12 +163,23 @@ mqttClient.on('connect', () => {
           process.stdin;
         const rl = readline.createInterface({input});
 
-        rl.on('line', (topic) => {
-          mqttClient.publish(topic.trim(), null, {retain: true});
-          argv.verbose && console.log('cleared', topic);
+        // rl.on('line', (topic) => {
+        //   mqttClient.publish(topic.trim(), null, {retain: true});
+        //   argv.verbose && console.log('cleared', topic);
+        // });
+        // rl.on('close', () => process.exit(0));
+        const topics = [];
+        rl.on('line', t => topics.push(t));
+        rl.on('close', async () => {
+          console.log(topics);
+          for (const topic of topics) {
+            mqttClient.publish(topic.trim(), null, {retain: true});
+            argv.verbose && console.log('cleared', topic);
+            // throttle, to avoid max emitter error
+            await wait(0.05);
+          }
+          process.exit(0);
         });
-        rl.on('close', () => process.exit(0));
-
       })
 
     .command('pub topic message', 'publish message on topic',
