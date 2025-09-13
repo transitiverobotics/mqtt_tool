@@ -11,6 +11,9 @@ const readline = require('node:readline');
 
 const DIR = process.cwd();
 
+const RECONNECT_PERIOD_DEFAULT = 1000; // default time until mqtt retries connecting
+const RECONNECT_PERIOD_MAX = 20000;    // max retry time (after dynamic backoff)
+
 let exit = () => {
   process.exit();
 }
@@ -56,7 +59,7 @@ setTerminalTitle('mqtt_tool');
 
 const options = {
   rejectUnauthorized: false,
-  protocolVersion: 5 // needed for the `rap` option, i.e., to get retain flags
+  protocolVersion: 5, // needed for the `rap` option, i.e., to get retain flags
 };
 
 if (MQTT_URL.startsWith('mqtts')) {
@@ -68,8 +71,11 @@ if (MQTT_URL.startsWith('mqtts')) {
   }
 }
 
+/** usage:
+ MQTT_URL=ws://mqtt.localhost JWT='....' ./index.js sub .. */
 if (process.env.JWT) {
   const payload = decodeJWT(process.env.JWT);
+  console.log('using JWT', payload);
   const id = payload.id;
   options.username = JSON.stringify({id, payload});
   options.password = process.env.JWT;
@@ -99,13 +105,27 @@ if (!process.env.MQTT_URL && !options.key && !options.username) {
   console.log('Trying to connect to local capability');
 }
 
+/** Implement dynamic backoff when we fail to connect. */
+let reconnectPeriod = RECONNECT_PERIOD_DEFAULT; // default to start with
+const transformWsUrl = (url, options, client) => {
+  options.reconnectPeriod = reconnectPeriod;
+  console.log(`reconnect in ${options.reconnectPeriod} s`);
+  return url;
+}
+options.transformWsUrl = transformWsUrl;
+
 const mqttClient = mqtt.connect(MQTT_URL, options);
 
-mqttClient.on('error', console.log);
+mqttClient.on('close', () => {
+  console.warn('closed');
+  if (reconnectPeriod < RECONNECT_PERIOD_MAX ) reconnectPeriod *= 2;
+});
+
 mqttClient.on('disconnect', console.log);
 
-mqttClient.on('connect', () => {
+mqttClient.once('connect', () => {
   console.log('connected to mqtt broker');
+  reconnectPeriod = RECONNECT_PERIOD_DEFAULT; // reset to default after a successful connection
 
   yargs(hideBin(process.argv))
 
@@ -124,6 +144,7 @@ mqttClient.on('connect', () => {
             argv.verbose ? ( payload.length > 0 ?
               //JSON.stringify(JSON.parse(payload.toString()), true, 2)
               JSON.stringify(JSON.parse(payload.toString()))
+              // payload.toString()
               : null )
             : '',
             argv.verbose ? packet.retain : ''
@@ -171,7 +192,6 @@ mqttClient.on('connect', () => {
         const topics = [];
         rl.on('line', t => topics.push(t));
         rl.on('close', async () => {
-          console.log(topics);
           for (const topic of topics) {
             mqttClient.publish(topic.trim(), null, {retain: true});
             argv.verbose && console.log('cleared', topic);
