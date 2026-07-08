@@ -15,6 +15,10 @@
   ],
   "author": "Christian Fritz",
   "license": "Apache-2.0",
+ 	"repository": {
+   	"type": "git",
+   	"url": "github:transitiverobotics/mqtt_tool"
+  },
   "dependencies": {
     "mqtt": "^5.13.1",
     "yargs": "^17.0.1"

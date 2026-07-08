@@ -136,6 +136,12 @@ mqttClient.once('connect', () => {
             describe: 'topic selector (using + and # wild-cards if you want)',
             default: '#'
           })
+          .option('size', {
+            alias: 's',
+            type: 'boolean',
+            description: 'Print size of message'
+          })
+
       }, (argv) => {
         if (argv.verbose) console.info(`subscribing to: ${argv.topic}`)
 
@@ -146,7 +152,9 @@ mqttClient.once('connect', () => {
               JSON.stringify(JSON.parse(payload.toString()))
               // payload.toString()
               : null )
-            : '',
+            : (argv.size ? payload.length
+              : ''
+            ),
             argv.verbose ? packet.retain : ''
           );
         });
