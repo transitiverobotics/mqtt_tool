@@ -3,11 +3,12 @@
 /** Tiny tool for cleaning things up in mqtt retained messages.
 Modify as needed for the case, run, move on. */
 
+const readline = require('node:readline');
+const fs = require('node:fs');
 const mqtt = require('mqtt');
-const fs = require('fs');
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
-const readline = require('node:readline');
+const chalk = require('chalk').default;
 
 const DIR = process.cwd();
 
@@ -141,22 +142,37 @@ mqttClient.once('connect', () => {
             type: 'boolean',
             description: 'Print size of message'
           })
-
+          .option('timestamps', {
+            alias: 't',
+            type: 'boolean',
+            description: 'Run with verbose logging'
+          })
       }, (argv) => {
         if (argv.verbose) console.info(`subscribing to: ${argv.topic}`)
 
         mqttClient.on('message', (topic, payload, packet) => {
-          console.log(topic,
-            argv.verbose ? ( payload.length > 0 ?
-              //JSON.stringify(JSON.parse(payload.toString()), true, 2)
-              JSON.stringify(JSON.parse(payload.toString()))
-              // payload.toString()
-              : null )
-            : (argv.size ? payload.length
-              : ''
-            ),
-            argv.verbose ? packet.retain : ''
-          );
+          // console.log(
+          //   argv.timestamps ? chalk.gray((new Date()).toISOString()) : '',
+          //   topic,
+          //   argv.verbose ? ( payload.length > 0 ?
+          //     //JSON.stringify(JSON.parse(payload.toString()), true, 2)
+          //     chalk.cyan(JSON.stringify(JSON.parse(payload.toString())))
+          //     // payload.toString()
+          //     : null )
+          //   : (argv.size ? payload.length
+          //     : ''
+          //   ),
+          //   argv.verbose ? packet.retain : ''
+          // );
+          console.log([
+            argv.timestamps && chalk.gray((new Date()).toISOString()),
+            topic,
+            argv.verbose && ( payload.length > 0 ?
+              chalk.cyan(JSON.stringify(JSON.parse(payload.toString())))
+              : null ),
+            argv.size && chalk.magenta(payload.length),
+            argv.verbose && chalk.yellow(packet.retain)
+            ].filter(Boolean).join(' '));
         });
         mqttClient.subscribe(argv.topic, {rap: true}, argv.verbose && console.log);
         setTerminalTitle(`mqtt_tool sub ${argv.topic}`);
