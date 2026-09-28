@@ -1,0 +1,4 @@
+\*.tgz
+tmp
+to_clear.txt
+clear.sh
